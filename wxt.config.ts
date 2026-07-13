@@ -7,8 +7,8 @@ export default defineConfig({
   manifest: ({ browser, manifestVersion, mode, command }) => {
     return {
       manifest_version: 2,
-      name: "WXT Example",
-      description: "WXT Example",
+      name: "My Reddit Buddy",
+      description: "WXT Example-1",
       version: "1.0.0",
       permissions: ["storage", "tabs"],
     };
