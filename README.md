@@ -248,5 +248,4 @@ npm test
 - Markdown rendering with syntax highlighting
 - Modular React component architecture
 - TypeScript throughout the codebase
-
 ---
