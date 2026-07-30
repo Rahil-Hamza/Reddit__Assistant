@@ -20,7 +20,7 @@ const resources = {
       "err_key_empty": "Secret API Key cannot be empty. Please enter your key.",
       "err_storage": "An unexpected error occurred while saving to storage.",
       "privacy_notice": "Your API credentials are kept private and processed securely on your browser.",
-      "copyright": "Copyright Rahil @ 2026"
+      "copyright": "Copyright Rahil © 2026"
     }
   },
   es: {
@@ -40,7 +40,7 @@ const resources = {
       "err_key_empty": "La clave secreta no puede estar vacía.",
       "err_storage": "Ocurrió un error inesperado al guardar.",
       "privacy_notice": "Sus credenciales se mantienen privadas y se procesan de forma segura en su navegador.",
-      "copyright": "Derechos de autor Rahil @ 2026"
+      "copyright": "Derechos de autor Rahil © 2026"
     }
   },
   ar: {

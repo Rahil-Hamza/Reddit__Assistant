@@ -11,51 +11,42 @@ import {
 import { browser } from "wxt/browser";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "./LanguageSelector";
+import type {FormData} from '../../hooks/formData.ts'
+import  {useFormData} from '../../hooks/formData.ts'
+import { toast } from "react-hot-toast/headless";
 
-interface FormInfo {
-  endpoint: string;
-  apiKey: string;
-}
 
 export default function CredentialForm() {
   const { t } = useTranslation();
-  const [formInfo, setFormInfo] = useState<FormInfo>({
-    endpoint: "",
-    apiKey: "",
-  });
+  const {formData, setFormData} = useFormData();
+
+ const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { name, value } = e.target;
+  
+  // 1. Preserve previous data and dynamically update the field being typed in
+  setFormData((prevData) => ({
+    ...prevData,
+    [name]: value,
+  }));
+  
+  // 2. Clear out any error messages
+  clearErrors();
+  
+  // 3. Hide the success message if the user starts typing again
+  if (saveSuccess) {
+    setSaveSuccess(false);
+  }
+};
+
   const [showApiKey, setShowApiKey] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
   const [error, setError] = useState<string | null>(null);
-  const [errorField, setErrorField] = useState<keyof FormInfo | null>(null);
+  const [errorField, setErrorField] = useState<keyof FormData | null>(null);
 
   const endpointRef = useRef<HTMLInputElement>(null);
   const apiKeyRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    async function loadStoredCredentials() {
-      try {
-        const stored = (await browser.storage.local.get([
-          "llm_endpoint",
-          "llm_api_key",
-        ])) as {
-          llm_endpoint?: string;
-          llm_api_key?: string;
-        };
-
-        if (stored.llm_endpoint || stored.llm_api_key) {
-          setFormInfo({
-            endpoint: stored.llm_endpoint || "",
-            apiKey: stored.llm_api_key || "",
-          });
-        }
-      } catch (error) {
-        console.error("Failed to load credentials from Chrome storage:", error);
-      }
-    }
-    loadStoredCredentials();
-  }, []);
 
   useEffect(() => {
     if (!error) return;
@@ -73,20 +64,14 @@ export default function CredentialForm() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormInfo((prev) => ({ ...prev, [name]: value }));
-    clearErrors();
-    if (saveSuccess) setSaveSuccess(false);
-  };
 
   const validateForm = (): {
     isValid: boolean;
     message?: string;
-    field?: keyof FormInfo;
+    field?: keyof FormData;
   } => {
-    const trimmedEndpoint = formInfo.endpoint.trim();
-    const trimmedApiKey = formInfo.apiKey.trim();
+    const trimmedEndpoint = formData.endpoint.trim();
+    const trimmedApiKey = formData.apiKey.trim();
 
     if (!trimmedEndpoint) {
       return { isValid: false, message: t("err_endpoint_empty"), field: "endpoint" };
@@ -108,11 +93,12 @@ export default function CredentialForm() {
     return { isValid: true };
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setSaveSuccess(false);
 
+    // 1. Run validation
     const validation = validateForm();
     if (!validation.isValid) {
       setError(validation.message || "Please check your inputs.");
@@ -127,12 +113,18 @@ export default function CredentialForm() {
     setIsSaving(true);
 
     try {
+      // 2. Save using the modern async/await Promise approach (cleaner than callbacks)
       await browser.storage.local.set({
-        llm_endpoint: formInfo.endpoint.trim(),
-        llm_api_key: formInfo.apiKey.trim(),
+        formData: {
+          endpoint: formData.endpoint.trim(),
+          apiKey: formData.apiKey.trim(),
+        }
       });
 
+      // 3. Trigger both UI success states (Local CheckCircle + Global Toast)
       setSaveSuccess(true);
+      toast.success("Saved successfully!"); 
+      
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error("❌ Failed to save credentials:", error);
@@ -141,7 +133,7 @@ export default function CredentialForm() {
       setIsSaving(false);
     }
   };
-
+  
   return (
     <div
       onClick={clearErrors}
@@ -192,7 +184,7 @@ export default function CredentialForm() {
                 name="endpoint"
                 required
                 placeholder="https://generativelanguage.googleapis.com/..."
-                value={formInfo.endpoint}
+                value={formData?.endpoint}
                 onChange={handleChange}
                 onFocus={clearErrors}
                 dir="ltr"
@@ -245,7 +237,7 @@ export default function CredentialForm() {
                 name="apiKey"
                 required
                 placeholder="AIzaSy..."
-                value={formInfo.apiKey}
+                value={formData?.apiKey}
                 onChange={handleChange}
                 onFocus={clearErrors}
                 dir="ltr"
